@@ -157,3 +157,44 @@ function h5pmods_alter_user_result(&$data, $result_id, $content_id, $user_id) {
   }
 }
 add_filter('h5p_alter_user_result', 'h5pmods_alter_user_result', 10, 4);
+
+/**
+ * Allows WYSIWIG changes
+ *
+ * In this example I allow sub and sup in the Accordion Content type.
+ */
+function mymods_h5p_semantics_alter(&$semantics, $content_type, $major_version, $minor_version) {
+  foreach ($semantics as $field) {
+    // Go through list fields
+    while ($field->type === 'list') {
+      $field = $field->field;
+    }
+  
+    // Go through group fields
+    if ($field->type === 'group') {
+      mymods_h5p_semantics_alter($field->fields); // Check function name!
+      continue;
+    }
+  
+    // Check to see if we have the correct type and widget
+    if ($field->type === 'text' && isset($field->widget) && $field->widget === 'html') {
+      // Found a wysiwyg/CKEditor field. Add sub/sup buttons.
+      if (!isset($field->tags)) {
+        $field->tags = array();
+      }
+      if (!in_array('u', $field->tags)) {
+        $field->tags[] = 'u';
+      }
+      if (!in_array('sub', $field->tags)) {
+        $field->tags[] = 'sub';
+      }
+      if (!in_array('sup', $field->tags)) {
+        $field->tags[] = 'sup';
+      }
+      if (!in_array('img', $field->tags)) {
+        $field->tags[] = 'img';
+      }
+    }
+  }
+}
+add_action('h5p_alter_library_semantics', 'mymods_h5p_semantics_alter');
